@@ -49,8 +49,9 @@ public final class Plot {
   private final int end_time;
 
   /** All the DataPoints we want to plot. */
-  private ArrayList<DataPoints> datapoints = new ArrayList<DataPoints>();
-
+  private ArrayList<DataPoints> datapoints =
+    new ArrayList<DataPoints>();
+  
   private List<Annotation> annotations = new ArrayList<Annotation>();
 
   /** Per-DataPoints Gnuplot options. */
@@ -73,8 +74,8 @@ public final class Plot {
    * Gnuplot always renders timestamps in UTC, so we simply apply a delta
    * to get local time.
    */
-  private static final int utc_offset = TimeZone.getDefault().getOffset(
-      System.currentTimeMillis()) / 1000;
+  private static final int utc_offset =
+    TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 1000;
 
   /**
    * Constructor.
@@ -104,7 +105,7 @@ public final class Plot {
       throw new IllegalArgumentException("Invalid end time: " + end_time);
     } else if (start_time >= end_time) {
       throw new IllegalArgumentException("start time (" + start_time
-          + ") is greater than or equal to end time: " + end_time);
+        + ") is greater than or equal to end time: " + end_time);
     }
     this.start_time = (int) start_time;
     this.end_time = (int) end_time;
@@ -143,7 +144,7 @@ public final class Plot {
     if (width < MIN_PIXELS || height < MIN_PIXELS) {
       final String what = width < MIN_PIXELS ? "width" : "height";
       throw new IllegalArgumentException(what + " smaller than " + MIN_PIXELS
-          + " in " + width + 'x' + height);
+                                         + " in " + width + 'x' + height);
     }
     this.width = width;
     this.height = height;
@@ -154,7 +155,8 @@ public final class Plot {
    * @param datapoints The data points to plot.
    * @param options The options to apply to this specific series.
    */
-  public void add(final DataPoints datapoints, final String options) {
+  public void add(final DataPoints datapoints,
+                  final String options) {
     // Technically, we could check the number of data points in the
     // datapoints argument in order to do something when there are none, but
     // this is potentially expensive with a SpanGroup since it requires
@@ -240,7 +242,7 @@ public final class Plot {
    * Can be {@code null} if there's no data to plot.
    */
   private void writeGnuplotScript(final String basepath,
-      final String[] datafiles) throws IOException {
+                                  final String[] datafiles) throws IOException {
     final String script_path = basepath + ".gnuplot";
     final PrintWriter gp = new PrintWriter(script_path);
     try {
@@ -284,7 +286,8 @@ public final class Plot {
       }
       final int nseries = datapoints.size();
       if (nseries > 0) {
-        gp.write("set grid\n" + "set style data linespoints\n");
+        gp.write("set grid\n"
+                 + "set style data linespoints\n");
         if (!params.containsKey("key")) {
           gp.write("set key right box\n");
         }
@@ -300,7 +303,8 @@ public final class Plot {
           final String key = entry.getKey();
           final String value = entry.getValue();
           if (value != null) {
-            gp.append("set ").append(key).append(' ').append(value).write('\n');
+            gp.append("set ").append(key)
+              .append(' ').append(value).write('\n');
           } else {
             gp.append("unset ").append(key).write('\n');
           }
@@ -313,17 +317,13 @@ public final class Plot {
           break;
         }
       }
-
-      for (Annotation annotation : annotations) {
+      
+      for(Annotation annotation : annotations) {
         String ts = Long.toString(annotation.getTimestamp());
         String value = new String(annotation.getValue());
-        gp.append("set arrow from \"").append(ts).append("\", graph 0 to \"")
-            .append(ts).append("\", graph 1 nohead ls 3\n");
-        gp.append("set object rectangle at \"").append(ts)
-            .append("\", graph 0 size char (strlen(\"").append(value)
-            .append("\") + 3), char 1 front fc rgbcolor \"white\"\n");
-        gp.append("set label \"").append(value).append("\" at \"").append(ts)
-            .append("\", graph 0 front center\n");
+        gp.append("set arrow from \"").append(ts).append("\", graph 0 to \"").append(ts).append("\", graph 1 nohead ls 3\n");
+        gp.append("set object rectangle at \"").append(ts).append("\", graph 0 size char (strlen(\"").append(value).append("\") + 3), char 1 front fc rgbcolor \"white\"\n");
+        gp.append("set label \"").append(value).append("\" at \"").append(ts).append("\", graph 0 front center\n");
       }
 
       gp.write("plot ");
