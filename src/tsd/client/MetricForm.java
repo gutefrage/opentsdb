@@ -13,23 +13,19 @@
 package tsd.client;
 
 import java.util.ArrayList;
+import java.util.Map;
 
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 final class MetricForm extends HorizontalPanel implements Focusable {
 
@@ -37,13 +33,6 @@ final class MetricForm extends HorizontalPanel implements Focusable {
     void onMetricChange(MetricForm widget);
   }
 
-  private static final String TSDB_ID_CLASS = "[-_./a-zA-Z0-9]";
-  private static final String TSDB_ID_RE = "^" + TSDB_ID_CLASS + "*$";
-  private static final String TSDB_TAGVALUE_RE =
-    "^(\\*?"                                       // a `*' wildcard or nothing
-    + "|" + TSDB_ID_CLASS + "+(\\|" + TSDB_ID_CLASS + "+)*)$"; // `foo|bar|...'
-
-  private final EventsHandler events_handler;
   private MetricChangeHandler metric_change_handler;
 
   private final CheckBox downsample = new CheckBox("Downsample");
@@ -53,11 +42,11 @@ final class MetricForm extends HorizontalPanel implements Focusable {
   private final CheckBox x1y2 = new CheckBox("Right Axis");
   private final ListBox aggregators = new ListBox();
   private final ValidatedTextBox metric = new ValidatedTextBox();
-  private final FlexTable tagtable = new FlexTable();
+  private TagsPanel tagsPanel;
 
   public MetricForm(final EventsHandler handler) {
-    events_handler = handler;
     setupDownsampleWidgets();
+    tagsPanel = new TagsPanel(handler);
     downsample.addClickHandler(handler);
     downsampler.addChangeHandler(handler);
     interval.addBlurHandler(handler);
@@ -79,7 +68,7 @@ final class MetricForm extends HorizontalPanel implements Focusable {
       metric.addKeyPressHandler(metric_handler);
     }
 
-    metric.setValidationRegexp(TSDB_ID_RE);
+    metric.setValidationRegexp(ClientConstants.TSDB_ID_RE);
     assembleUi();
   }
 
@@ -191,10 +180,15 @@ final class MetricForm extends HorizontalPanel implements Focusable {
   public CheckBox x1y2() {
     return x1y2;
   }
+  
+  public void autoSuggestTag(String tag) {
+    tagsPanel.autoSuggestTag(tag);
+  }
 
   private void assembleUi() {
     setWidth("100%");
     {  // Left hand-side panel.
+      final VerticalPanel leftPanel = new VerticalPanel();
       final HorizontalPanel hbox = new HorizontalPanel();
       final InlineLabel l = new InlineLabel();
       l.setText("Metric:");
@@ -211,6 +205,10 @@ final class MetricForm extends HorizontalPanel implements Focusable {
       addTag();
       tagtable.setText(1, 0, "Tags");
       add(tagtable);
+
+      leftPanel.add(hbox);
+      leftPanel.add(tagsPanel);
+      add(leftPanel);
     }
     {  // Right hand-side panel.
       final VerticalPanel vbox = new VerticalPanel();
@@ -268,11 +266,11 @@ final class MetricForm extends HorizontalPanel implements Focusable {
     }
     url.append(':').append(metric);
     {
-      final int ntags = getNumTags();
+      final Map<String, String> tags = tagsPanel.getTags();
       url.append('{');
-      for (int tag = 0; tag < ntags; tag++) {
-        final String tagname = getTagName(tag);
-        final String tagvalue = getTagValue(tag);
+      for (Map.Entry<String, String> tag : tags.entrySet()) {
+        final String tagname = tag.getKey();
+        final String tagvalue = tag.getValue();
         if (tagname.isEmpty() || tagvalue.isEmpty()) {
           continue;
         }
