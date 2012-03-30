@@ -61,7 +61,7 @@ final class TestCompactionQueue {
   public void before() throws Exception {
     // Inject the attributes we need into the "tsdb" object.
     Whitebox.setInternalState(tsdb, "metrics", mock(UniqueId.class));
-    Whitebox.setInternalState(tsdb, "table", TABLE);
+    Whitebox.setInternalState(tsdb, "tableTimeseries", TABLE);
     Whitebox.setInternalState(TSDB.class, "enable_compactions", true);
     // Stub out the compaction thread, so it doesn't even start.
     PowerMockito.whenNew(CompactionQueue.Thrd.class).withNoArguments()

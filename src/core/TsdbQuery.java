@@ -56,6 +56,9 @@ final class TsdbQuery implements Query {
    * We use this one because it preserves every possible byte unchanged.
    */
   private static final Charset CHARSET = Charset.forName("ISO-8859-1");
+  
+  /** Unique identifier for the query */
+  private final String id;
 
   /** The TSDB we belong to. */
   private final TSDB tsdb;
@@ -112,8 +115,13 @@ final class TsdbQuery implements Query {
   private int sample_interval;
 
   /** Constructor. */
-  public TsdbQuery(final TSDB tsdb) {
+  public TsdbQuery(final TSDB tsdb, final String id) {
     this.tsdb = tsdb;
+    this.id = id;
+  }
+
+  public String getId() {
+    return id;
   }
 
   public void setStartTime(final long timestamp) {
@@ -153,9 +161,8 @@ final class TsdbQuery implements Query {
   }
 
   public void setTimeSeries(final String metric,
-                            final Map<String, String> tags,
-                            final Aggregator function,
-                            final boolean rate) throws NoSuchUniqueName {
+      final Map<String, String> tags, final Aggregator function,
+      final boolean rate) throws NoSuchUniqueName {
     findGroupBys(tags);
     this.metric = tsdb.metrics.getId(metric);
     this.tags = Tags.resolveAll(tsdb, tags);
@@ -212,8 +219,7 @@ final class TsdbQuery implements Query {
         }
         final short value_width = tsdb.tag_values.width();
         final byte[][] value_ids = new byte[values.length][value_width];
-        group_by_values.put(tsdb.tag_names.getId(tag.getKey()),
-                            value_ids);
+        group_by_values.put(tsdb.tag_names.getId(tag.getKey()), value_ids);
         for (int j = 0; j < values.length; j++) {
           final byte[] value_id = tsdb.tag_values.getId(values[j]);
           System.arraycopy(value_id, 0, value_ids[j], 0, value_width);
@@ -240,7 +246,7 @@ final class TsdbQuery implements Query {
   private TreeMap<byte[], Span> findSpans() throws HBaseException {
     final short metric_width = tsdb.metrics.width();
     final TreeMap<byte[], Span> spans =  // The key is a row key from HBase.
-      new TreeMap<byte[], Span>(new SpanCmp(metric_width));
+    new TreeMap<byte[], Span>(new SpanCmp(metric_width));
     int nrows = 0;
     int hbase_time = 0;  // milliseconds.
     long starttime = System.nanoTime();
@@ -252,9 +258,10 @@ final class TsdbQuery implements Query {
         for (final ArrayList<KeyValue> row : rows) {
           final byte[] key = row.get(0).key();
           if (Bytes.memcmp(metric, key, 0, metric_width) != 0) {
-            throw new IllegalDataException("HBase returned a row that doesn't match"
-                + " our scanner (" + scanner + ")! " + row + " does not start"
-                + " with " + Arrays.toString(metric));
+            throw new IllegalDataException(
+                "HBase returned a row that doesn't match" + " our scanner ("
+                    + scanner + ")! " + row + " does not start" + " with "
+                    + Arrays.toString(metric));
           }
           Span datapoints = spans.get(key);
           if (datapoints == null) {
@@ -295,13 +302,9 @@ final class TsdbQuery implements Query {
     if (group_bys == null) {
       // We haven't been asked to find groups, so let's put all the spans
       // together in the same group.
-      final SpanGroup group = new SpanGroup(tsdb,
-                                            getScanStartTime(),
-                                            getScanEndTime(),
-                                            spans.values(),
-                                            rate,
-                                            aggregator,
-                                            sample_interval, downsampler);
+      final SpanGroup group = new SpanGroup(tsdb, getScanStartTime(),
+          getScanEndTime(), spans.values(), rate, aggregator, sample_interval,
+          downsampler);
       return new SpanGroup[] { group };
     }
 
@@ -335,16 +338,15 @@ final class TsdbQuery implements Query {
       }
       if (value_id == null) {
         LOG.error("WTF?  Dropping span for row " + Arrays.toString(row)
-                 + " as it had no matching tag from the requested groups,"
-                 + " which is unexpected.  Query=" + this);
+            + " as it had no matching tag from the requested groups,"
+            + " which is unexpected.  Query=" + this);
         continue;
       }
       //LOG.info("Span belongs to group " + Arrays.toString(group) + ": " + Arrays.toString(row));
       SpanGroup thegroup = groups.get(group);
       if (thegroup == null) {
         thegroup = new SpanGroup(tsdb, getScanStartTime(), getScanEndTime(),
-                                 null, rate, aggregator,
-                                 sample_interval, downsampler);
+            null, rate, aggregator, sample_interval, downsampler);
         // Copy the array because we're going to keep `group' and overwrite
         // its contents.  So we want the collection to have an immutable copy.
         final byte[] group_copy = new byte[group.length];
@@ -373,10 +375,8 @@ final class TsdbQuery implements Query {
     // & end dates in order to do proper rate calculation or downsampling near
     // the "edges" of the graph.
     Bytes.setInt(start_row, (int) getScanStartTime(), metric_width);
-    Bytes.setInt(end_row, (end_time == UNSET
-                           ? -1  // Will scan until the end (0xFFF...).
-                           : (int) getScanEndTime()),
-                 metric_width);
+    Bytes.setInt(end_row, (end_time == UNSET ? -1  // Will scan until the end (0xFFF...).
+        : (int) getScanEndTime()), metric_width);
     System.arraycopy(metric, 0, start_row, 0, metric_width);
     System.arraycopy(metric, 0, end_row, 0, metric_width);
 
@@ -437,22 +437,19 @@ final class TsdbQuery implements Query {
     // Generate a regexp for our tags.  Say we have 2 tags: { 0 0 1 0 0 2 }
     // and { 4 5 6 9 8 7 }, the regexp will be:
     // "^.{7}(?:.{6})*\\Q\000\000\001\000\000\002\\E(?:.{6})*\\Q\004\005\006\011\010\007\\E(?:.{6})*$"
-    final StringBuilder buf = new StringBuilder(
-        15  // "^.{N}" + "(?:.{M})*" + "$"
+    final StringBuilder buf = new StringBuilder(15  // "^.{N}" + "(?:.{M})*" + "$"
         + ((13 + tagsize) // "(?:.{M})*\\Q" + tagsize bytes + "\\E"
-           * (tags.size() + (group_bys == null ? 0 : group_bys.size() * 3))));
+        * (tags.size() + (group_bys == null ? 0 : group_bys.size() * 3))));
     // In order to avoid re-allocations, reserve a bit more w/ groups ^^^
 
     // Alright, let's build this regexp.  From the beginning...
     buf.append("(?s)"  // Ensure we use the DOTALL flag.
-               + "^.{")
-       // ... start by skipping the metric ID and timestamp.
-       .append(tsdb.metrics.width() + Const.TIMESTAMP_BYTES)
-       .append("}");
+        + "^.{")
+    // ... start by skipping the metric ID and timestamp.
+        .append(tsdb.metrics.width() + Const.TIMESTAMP_BYTES).append("}");
     final Iterator<byte[]> tags = this.tags.iterator();
-    final Iterator<byte[]> group_bys = (this.group_bys == null
-                                        ? new ArrayList<byte[]>(0).iterator()
-                                        : this.group_bys.iterator());
+    final Iterator<byte[]> group_bys = (this.group_bys == null ? new ArrayList<byte[]>(
+        0).iterator() : this.group_bys.iterator());
     byte[] tag = tags.hasNext() ? tags.next() : null;
     byte[] group_by = group_bys.hasNext() ? group_bys.next() : null;
     // Tags and group_bys are already sorted.  We need to put them in the
@@ -465,9 +462,8 @@ final class TsdbQuery implements Query {
         tag = tags.hasNext() ? tags.next() : null;
       } else {  // Add a group_by.
         addId(buf, group_by);
-        final byte[][] value_ids = (group_by_values == null
-                                    ? null
-                                    : group_by_values.get(group_by));
+        final byte[][] value_ids = (group_by_values == null ? null
+            : group_by_values.get(group_by));
         if (value_ids == null) {  // We don't want any specific ID...
           buf.append(".{").append(value_width).append('}');  // Any value ID.
         } else {  // We want specific IDs.  List them: /(AAA|BBB|CCC|..)/
@@ -486,7 +482,7 @@ final class TsdbQuery implements Query {
     // Skip any number of tags before the end.
     buf.append("(?:.{").append(tagsize).append("})*$");
     scanner.setKeyRegexp(buf.toString(), CHARSET);
-   }
+  }
 
   /**
    * Helper comparison function to compare tag name IDs.
@@ -496,9 +492,8 @@ final class TsdbQuery implements Query {
    * @return {@code true} number if {@code tag} should be used next (because
    * it contains a smaller ID), {@code false} otherwise.
    */
-  private boolean isTagNext(final short name_width,
-                            final byte[] tag,
-                            final byte[] group_by) {
+  private boolean isTagNext(final short name_width, final byte[] tag,
+      final byte[] group_by) {
     if (tag == null) {
       return false;
     } else if (group_by == null) {
@@ -533,11 +528,9 @@ final class TsdbQuery implements Query {
 
   public String toString() {
     final StringBuilder buf = new StringBuilder();
-    buf.append("TsdbQuery(start_time=")
-       .append(getStartTime())
-       .append(", end_time=")
-       .append(getEndTime())
-       .append(", metric=").append(Arrays.toString(metric));
+    buf.append("TsdbQuery(start_time=").append(getStartTime())
+        .append(", end_time=").append(getEndTime()).append(", metric=")
+        .append(Arrays.toString(metric));
     try {
       buf.append(" (").append(tsdb.metrics.getName(metric));
     } catch (NoSuchUniqueId e) {
@@ -548,9 +541,8 @@ final class TsdbQuery implements Query {
     } catch (NoSuchUniqueId e) {
       buf.append("), tags=<").append(e.getMessage()).append('>');
     }
-    buf.append(", rate=").append(rate)
-       .append(", aggregator=").append(aggregator)
-       .append(", group_bys=(");
+    buf.append(", rate=").append(rate).append(", aggregator=")
+        .append(aggregator).append(", group_bys=(");
     if (group_bys != null) {
       for (final byte[] tag_id : group_bys) {
         try {
@@ -558,8 +550,7 @@ final class TsdbQuery implements Query {
         } catch (NoSuchUniqueId e) {
           buf.append('<').append(e.getMessage()).append('>');
         }
-        buf.append(' ')
-           .append(Arrays.toString(tag_id));
+        buf.append(' ').append(Arrays.toString(tag_id));
         if (group_by_values != null) {
           final byte[][] value_ids = group_by_values.get(tag_id);
           if (value_ids == null) {
@@ -572,9 +563,7 @@ final class TsdbQuery implements Query {
             } catch (NoSuchUniqueId e) {
               buf.append('<').append(e.getMessage()).append('>');
             }
-            buf.append(' ')
-               .append(Arrays.toString(value_id))
-               .append(", ");
+            buf.append(' ').append(Arrays.toString(value_id)).append(", ");
           }
           buf.append('}');
         }

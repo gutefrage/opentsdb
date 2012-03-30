@@ -49,6 +49,18 @@ tsdb_SRC := \
 	src/core/Tags.java	\
 	src/core/TsdbQuery.java	\
 	src/core/WritableDataPoints.java	\
+	src/expression/ArithmeticExpressionCalculator.java	\
+	src/expression/ArithmeticExpressionResultDataPoint.java	\
+	src/expression/ArithmeticExpressionResultDataPoints.java	\
+	src/expression/ArithmeticNode.java	\
+	src/expression/MetricArithmeticExpressionLexer.java	\
+	src/expression/MetricArithmeticExpressionParser.java	\
+	src/expression/MetricArithmeticExpressionTreeWalker.java	\
+	src/expression/MetricFormulaException.java	\
+	src/expression/MetricNode.java	\
+	src/expression/Operator.java	\
+	src/expression/OperatorNode.java	\
+	src/expression/TimestampValue.java	\
 	src/graph/Plot.java	\
 	src/stats/Histogram.java	\
 	src/stats/StatsCollector.java	\
@@ -79,6 +91,7 @@ tsdb_SRC := \
 	src/uid/UniqueIdInterface.java
 
 tsdb_DEPS = \
+	$(ANTLR)	\
 	$(ASYNCHBASE)	\
 	$(JCL_OVER_SLF4J)	\
 	$(LOG4J_OVER_SLF4J)	\
@@ -110,11 +123,15 @@ test_DEPS = \
         $(jar)
 
 httpui_SRC := \
-	src/tsd/client/DateTimeBox.java	\
 	src/tsd/client/AnnotationsForm.java \
+	src/tsd/client/ClientConstants.java	\
+	src/tsd/client/DateTimeBox.java	\
 	src/tsd/client/EventsHandler.java	\
 	src/tsd/client/GotJsonCallback.java	\
+	src/tsd/client/MetricArithmeticExpressionOracle.java	\
+	src/tsd/client/MetricExpressionUtils.java	\
 	src/tsd/client/MetricForm.java	\
+	src/tsd/client/MetricFormulaForm.java	\
 	src/tsd/client/QueryUi.java	\
 	src/tsd/client/RemoteOracle.java	\
 	src/tsd/client/TagsPanel.java	\
@@ -131,7 +148,7 @@ EXTRA_DIST = tsdb.in $(tsdb_SRC) $(test_SRC) \
         bootstrap build.sh build-aux/gen_build_data.sh $(builddata_SRC)
 
 GWTC_JVM_ARGS =  # add jvmarg -Xss16M or similar if you see a StackOverflowError
-GWTC_ARGS = -ea  # Additional arguments like -style PRETTY or -logLevel DEBUG
+GWTC_ARGS = -ea # Additional arguments like -style PRETTY or -logLevel DEBUG
 
 package_dir := $(subst .,/,$(package))
 UNITTESTS := $(test_SRC:src/%.java=$(package_dir)/%.class)
@@ -208,7 +225,7 @@ get_dep_classpath = `for jar in $(tsdb_DEPS); do $(find_jar); done | tr '\n' ':'
                 $(JAVA_COMPILE) -cp $$cp $$src
 	@touch "$@"
 
-GWT_CLASSPATH = `jar=$(GWT_DEV); $(find_jar)`:`jar=$(GWT_USER); $(find_jar)`:$(srcdir)/src
+GWT_CLASSPATH = `jar=$(GWT_DEV); $(find_jar)`:`jar=$(GWT_USER); $(find_jar)`:`jar=third_party/gwt/gwt-log3.1.7.jar; $(find_jar)`:$(srcdir)/src
 # The GWT compiler is way too slow, that's not very Googley.  So we save the
 # MD5 of the files we compile in the stamp file and everytime `make' things it
 # needs to recompile the GWT code, we verify whether the code really changed

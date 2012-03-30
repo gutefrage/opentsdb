@@ -1,9 +1,9 @@
 // This file is part of OpenTSDB.
-// Copyright (C) 2010-2012  The OpenTSDB Authors.
+// Copyright (C) 2010  The OpenTSDB Authors.
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 2.1 of the License, or (at your
+// the Free Software Foundation, either version 3 of the License, or (at your
 // option) any later version.  This program is distributed in the hope that it
 // will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
 // of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
@@ -78,7 +78,7 @@ final class MetricForm extends HorizontalPanel implements Focusable {
   public CheckBox x1y2() {
     return x1y2;
   }
-  
+
   public void autoSuggestTag(String tag) {
     tagsPanel.autoSuggestTag(tag);
   }
@@ -91,8 +91,7 @@ final class MetricForm extends HorizontalPanel implements Focusable {
       final InlineLabel l = new InlineLabel();
       l.setText("Metric:");
       hbox.add(l);
-      final SuggestBox suggest = RemoteOracle.newSuggestBox("metrics",
-                                                            metric);
+      final SuggestBox suggest = RemoteOracle.newSuggestBox("metrics", metric);
       suggest.setLimit(40);
       hbox.add(suggest);
       hbox.setWidth("100%");
@@ -142,45 +141,64 @@ final class MetricForm extends HorizontalPanel implements Focusable {
     setSelectedItem(downsampler, "avg");
   }
 
-  public boolean buildQueryString(final StringBuilder url) {
-    final String metric = getMetric();
-    if (metric.isEmpty()) {
-      return false;
-    }
-    url.append("&m=");
-    url.append(selectedValue(aggregators));
-    if (downsample.getValue()) {
-      url.append(':').append(interval.getValue())
-        .append('-').append(selectedValue(downsampler));
-    }
-    if (rate.getValue()) {
-      url.append(":rate");
-    }
-    url.append(':').append(metric);
-    {
-      final String[][] tags = tagsPanel.getTags();
-      url.append('{');
-      for (int i = 0; i < tags.length; i++) {
-        final String tagname = tags[i][0];
-        final String tagvalue = tags[i][1];
-        if (tagname.isEmpty() || tagvalue.isEmpty()) {
-          continue;
+  public String buildQueryString() {
+    return new StringBuilder(getM()).append(getO()).toString();
+  }
+
+  // return the metric description String used in the "m" query parameter that 
+  // uniquely identifies a metric
+  public String getQueryMetricName() {
+    return getM();
+  }
+
+  private String getM() {
+    StringBuilder result = new StringBuilder();
+    String metric = getMetric();
+
+    if (!metric.isEmpty()) {
+      result.append("&m=");
+      result.append(selectedValue(aggregators));
+      if (downsample.getValue()) {
+        result.append(':').append(interval.getValue()).append('-')
+            .append(selectedValue(downsampler));
+      }
+      if (rate.getValue()) {
+        result.append(":rate");
+      }
+      result.append(':').append(metric);
+      {
+        final String[][] tags = tagsPanel.getTags();
+        result.append('{');
+        for (int i = 0; i < tags.length; i++) {
+          final String tagname = tags[i][0];
+          final String tagvalue = tags[i][1];
+          if (tagname.isEmpty() || tagvalue.isEmpty()) {
+            continue;
+          }
+          result.append(tagname).append('=').append(tagvalue).append(',');
         }
-        url.append(tagname).append('=').append(tagvalue)
-          .append(',');
-      }
-      final int last = url.length() - 1;
-      if (url.charAt(last) == '{') {  // There was no tag.
-        url.setLength(last);          // So remove the `{'.
-      } else {  // Need to replace the last `,' with a `}'.
-        url.setCharAt(url.length() - 1, '}');
+        final int last = result.length() - 1;
+        if (result.charAt(last) == '{') {  // There was no tag.
+          result.setLength(last);          // So remove the `{'.
+        } else {  // Need to replace the last `,' with a `}'.
+          result.setCharAt(result.length() - 1, '}');
+        }
       }
     }
-    url.append("&o=");
-    if (x1y2.getValue()) {
-      url.append("axis x1y2");
+
+    return result.toString();
+  }
+
+  private String getO() {
+    StringBuilder result = new StringBuilder();
+
+    if (!getMetric().isEmpty()) {
+      result.append("&o=");
+      if (x1y2.getValue()) {
+        result.append("axis x1y2");
+      }
     }
-    return true;
+    return result.toString();
   }
 
   private void setupDownsampleWidgets() {
