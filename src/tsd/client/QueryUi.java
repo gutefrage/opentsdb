@@ -21,6 +21,9 @@ package tsd.client;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.dom.client.Style;
@@ -71,6 +74,7 @@ import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -177,6 +181,8 @@ public class QueryUi implements EntryPoint, HistoryListener {
   /** Panel to place generated graphs and a box for zoom highlighting. */
   private final AbsolutePanel graphbox = new AbsolutePanel();
 
+  private final MetricFormulaForm metricFormulaForm = new MetricFormulaForm();
+  
   private final AnnotationsForm annotationsForm = new AnnotationsForm(
       refreshgraph);
 
@@ -344,7 +350,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
       final HorizontalPanel hbox = new HorizontalPanel();
       hbox.add(new InlineLabel("WxH:"));
       hbox.add(wxh);
-      table.setWidget(0, 3, hbox);
+      table.setWidget(0, 2, hbox);
     }
     {
 
@@ -356,6 +362,8 @@ public class QueryUi implements EntryPoint, HistoryListener {
         public void onMetricChange(final MetricForm metric) {
           final int index = metrics.getWidgetIndex(metric);
           metrics.getTabBar().setTabText(index, getTabTitle(metric));
+          
+          updateMetricNames();
         }
 
         private String getTabTitle(final MetricForm metric) {
@@ -365,6 +373,26 @@ public class QueryUi implements EntryPoint, HistoryListener {
             return metrictext;
           }
           return metrictext.substring(last_period + 1);
+        }
+
+        private void updateMetricNames() {
+          final Set<String> metricNames = new HashSet<String>();
+          int tabIndex = 1;
+
+          for (int i = 0; i < metrics.getWidgetCount(); i++) {
+            final Widget widget = metrics.getWidget(i);
+
+            if (widget instanceof MetricForm) {
+              final MetricForm metricForm = (MetricForm) widget;
+
+              metricNames.add(metricForm.getMetric() + " "
+                  + MetricExpressionUtils.METRIC_INDEX_LEFT_BRACKET
+                  + tabIndex++
+                  + MetricExpressionUtils.METRIC_INDEX_RIGHT_BRACKET);
+            }
+          }
+
+          metricFormulaForm.updateAutoSuggestions(metricNames);
         }
       };
       final EventsHandler updatey2range = new EventsHandler() {
@@ -408,20 +436,36 @@ public class QueryUi implements EntryPoint, HistoryListener {
       table.setWidget(2, 0, metrics);
     }
 
+    final DecoratedTabPanel metricFormulaPanel = new DecoratedTabPanel();
+    metricFormulaPanel.add(metricFormulaForm, "Metric Formulas");
+    metricFormulaPanel.selectTab(0);
+    metricFormulaPanel.setWidth("100%");
+    table.setWidget(3, 0, metricFormulaPanel);
+
     final DecoratedTabPanel annotationsPanel = new DecoratedTabPanel();
     annotationsPanel.add(annotationsForm, "Annotations");
     annotationsPanel.selectTab(0);
-    table.setWidget(3, 0, annotationsPanel);
+    annotationsPanel.setWidth("100%");
+    table.setWidget(4, 0, annotationsPanel);
 
-    table.getFlexCellFormatter().setColSpan(2, 0, 2);
-    table.getFlexCellFormatter().setColSpan(3, 0, 2);
-    table.getFlexCellFormatter().setRowSpan(1, 3, 2);
     final DecoratedTabPanel optpanel = new DecoratedTabPanel();
     optpanel.add(makeAxesPanel(), "Axes");
     optpanel.add(makeKeyPanel(), "Key");
     optpanel.add(makeStylePanel(), "Style");
     optpanel.selectTab(0);
-    table.setWidget(1, 3, optpanel);
+    optpanel.setHeight("100%");
+    table.setWidget(2, 1, optpanel);
+
+    table.getFlexCellFormatter().setRowSpan(0, 2, 2);
+    table.getFlexCellFormatter().setColSpan(2, 0, 2);
+    table.getFlexCellFormatter().setColSpan(3, 0, 2);
+    table.getFlexCellFormatter().setColSpan(4, 0, 2);
+    table.getFlexCellFormatter().setRowSpan(2, 1, 3);
+    table.getFlexCellFormatter().setVerticalAlignment(0, 2,
+        HasVerticalAlignment.ALIGN_TOP);
+    table.getFlexCellFormatter().setVerticalAlignment(2, 1,
+        HasVerticalAlignment.ALIGN_TOP);
+
 
     final DecoratorPanel decorator = new DecoratorPanel();
     decorator.setWidget(table);
@@ -700,52 +744,68 @@ public class QueryUi implements EntryPoint, HistoryListener {
     });
   }
 
-  private void addLabels(final StringBuilder url) {
+  private String getLabels() {
+    final StringBuilder result = new StringBuilder();
     final String ylabel = this.ylabel.getText();
+    
     if (!ylabel.isEmpty()) {
-      url.append("&ylabel=").append(URL.encodeComponent(ylabel));
+      result.append("&ylabel=").append(URL.encodeQueryString(ylabel));
     }
     if (y2label.isEnabled()) {
       final String y2label = this.y2label.getText();
       if (!y2label.isEmpty()) {
-        url.append("&y2label=").append(URL.encodeComponent(y2label));
+        result.append("&y2label=").append(URL.encodeQueryString(y2label));
       }
     }
+    
+    return result.toString();
   }
 
-  private void addFormats(final StringBuilder url) {
+  private String getFormats() {
+    final StringBuilder result = new StringBuilder();
     final String yformat = this.yformat.getText();
+    
     if (!yformat.isEmpty()) {
-      url.append("&yformat=").append(URL.encodeComponent(yformat));
+      result.append("&yformat=").append(URL.encodeQueryString(yformat));
     }
     if (y2format.isEnabled()) {
       final String y2format = this.y2format.getText();
       if (!y2format.isEmpty()) {
-        url.append("&y2format=").append(URL.encodeComponent(y2format));
+        result.append("&y2format=").append(URL.encodeQueryString(y2format));
       }
     }
+    
+    return result.toString();
   }
 
-  private void addYRanges(final StringBuilder url) {
+  private String getYRanges() {
+    final StringBuilder result = new StringBuilder();
     final String yrange = this.yrange.getText();
+    
     if (!yrange.isEmpty()) {
-      url.append("&yrange=").append(yrange);
+      result.append("&yrange=").append(yrange);
     }
     if (y2range.isEnabled()) {
       final String y2range = this.y2range.getText();
       if (!y2range.isEmpty()) {
-        url.append("&y2range=").append(y2range);
+        result.append("&y2range=").append(y2range);
       }
     }
+    
+    return result.toString();
   }
 
-  private void addLogscales(final StringBuilder url) {
+  private String getLogscales() {
+    final StringBuilder result = new StringBuilder();
+    
     if (ylog.getValue()) {
-      url.append("&ylog");
+      result.append("&ylog");
     }
     if (y2log.isEnabled() && y2log.getValue()) {
-      url.append("&y2log");
+      result.append("&y2log");
     }
+    
+    return result.toString();
   }
 
   /**
@@ -885,14 +945,20 @@ public class QueryUi implements EntryPoint, HistoryListener {
       // a special parameter that the server will delete from the query.
       url.append("&ignore=" + nrequests++);
     }
-    if (!addAllMetrics(url)) {
+    
+    final String metricQuery = getAllMetrics();
+    if (metricQuery.isEmpty()) {
       return;
     }
-    addAnnotations(url);
-    addLabels(url);
-    addFormats(url);
-    addYRanges(url);
-    addLogscales(url);
+    
+    url.append(metricQuery);
+    url.append(getArithmeticExpressions());
+    url.append(getAnnotations());
+    url.append(getLabels());
+    url.append(getFormats());
+    url.append(getYRanges());
+    url.append(getLogscales());
+    
     if (nokey.getValue()) {
       url.append("&nokey");
     } else if (!keypos.isEmpty() || horizontalkey.getValue()) {
@@ -1018,23 +1084,45 @@ public class QueryUi implements EntryPoint, HistoryListener {
     });
   }
 
-  private boolean addAllMetrics(final StringBuilder url) {
-    boolean found_metric = false;
+  private String getAllMetrics() {
+    final StringBuilder result = new StringBuilder();
+    
     for (final Widget widget : metrics) {
       if (!(widget instanceof MetricForm)) {
         continue;
       }
       final MetricForm metric = (MetricForm) widget;
-      found_metric |= metric.buildQueryString(url);
+      
+      result.append(metric.buildQueryString());
     }
-    if (!found_metric) {
+    if (result.length() == 0) {
       graphstatus.setText("Please specify a metric.");
     }
-    return found_metric;
+    return result.toString();
   }
 
-  private void addAnnotations(final StringBuilder url) {
-    annotationsForm.buildQueryString(url);
+  private String getArithmeticExpressions() {
+    StringBuilder result = new StringBuilder();
+    List<String> queryMetricNames = new ArrayList<String>();
+
+    for (final Widget widget : metrics) {
+      if (widget instanceof MetricForm) {
+        final MetricForm metric = (MetricForm) widget;
+        final String queryMetricName = metric.getQueryMetricName();
+
+        if (!queryMetricName.isEmpty()) {
+          queryMetricNames.add(queryMetricName.substring(3));
+        }
+      }
+    }
+
+    result.append(metricFormulaForm.buildQueryString(queryMetricNames));
+
+    return result.toString();
+  }
+
+  private String getAnnotations() {
+    return annotationsForm.buildQueryString();
   }
 
   private void asyncGetJson(final String url, final GotJsonCallback callback) {
@@ -1053,7 +1141,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
           final int code = response.getStatusCode();
           if (code == Response.SC_OK) {
             clearError();
-            callback.got(JSONParser.parse(response.getText()));
+            callback.got(JSONParser.parseLenient(response.getText()));
             return;
           } else if (code >= Response.SC_BAD_REQUEST) {  // 400+ => Oops.
             // Since we don't call the callback we've been given, reset this
@@ -1063,7 +1151,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
             // If the response looks like a JSON object, it probably contains
             // an error message.
             if (!err.isEmpty() && err.charAt(0) == '{') {
-              final JSONValue json = JSONParser.parse(err);
+              final JSONValue json = JSONParser.parseLenient(err);
               final JSONObject result = json == null ? null : json.isObject();
               final JSONValue jerr = result == null ? null : result.get("err");
               final JSONString serr = jerr == null ? null : jerr.isString();
