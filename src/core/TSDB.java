@@ -198,8 +198,8 @@ public final class TSDB {
   /**
    * Returns a new {@link Query} instance suitable for this TSDB.
    */
-  public Query newQuery() {
-    return new TsdbQuery(this);
+  public Query newQuery(String id) {
+    return new TsdbQuery(this, id);
   }
 
   /**
