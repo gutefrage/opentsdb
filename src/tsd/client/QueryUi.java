@@ -1019,8 +1019,10 @@ public class QueryUi implements EntryPoint, HistoryListener {
             graph.setUrl(uri + "&png");
             graph.setVisible(true);
 
-            msg += result.get("points").isNumber() + " points retrieved, "
-                + nplotted + " points plotted";
+            if (result.get("points") != null && result.get("points").isNumber() != null) {
+              msg += result.get("points").isNumber() + " points retrieved, "
+                  + nplotted + " points plotted";
+            }
           } else {
             graph.setVisible(false);
             msg += "Your query didn't return anything";
