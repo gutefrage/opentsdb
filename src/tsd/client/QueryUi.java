@@ -181,8 +181,8 @@ public class QueryUi implements EntryPoint, HistoryListener {
   /** Panel to place generated graphs and a box for zoom highlighting. */
   private final AbsolutePanel graphbox = new AbsolutePanel();
 
-  private final MetricFormulaForm metricFormulaForm = new MetricFormulaForm();
-  
+  private final MetricFormulaForm metricFormulaForm = new MetricFormulaForm(refreshgraph);
+
   private final AnnotationsForm annotationsForm = new AnnotationsForm(
       refreshgraph);
 
