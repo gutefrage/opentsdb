@@ -77,6 +77,12 @@ final class TSDMain {
     System.setProperty(prop, path + '/');
   }
 
+  private static void setSystemProp(final String prop, final String value) {
+    if (prop != null && !prop.isEmpty() && value != null && !value.isEmpty()) {
+      System.setProperty(prop, value);
+    }
+  }
+
   public static void main(String[] args) {
     Logger log = LoggerFactory.getLogger(TSDMain.class);
     log.info("Starting.");
@@ -102,6 +108,9 @@ final class TSDMain {
     argp.addOption("--flush-interval", "MSEC",
                    "Maximum time for which a new data point can be buffered"
                    + " (default: " + DEFAULT_FLUSH_INTERVAL + ").");
+    argp.addOption("--fncalculators", "CLASSES", 
+                   "Comma-separated function calculator definitions for arithmetic expressions" +
+                   " (<FUNCTION_NAME>:<CLASS_NAME>, e.g. foo.bar.fn:com.example.function.foo)");
     CliOptions.addAutoMetricFlag(argp);
     args = CliOptions.parse(argp, args);
     if (args == null || !argp.has("--port")
@@ -118,6 +127,7 @@ final class TSDMain {
                               DONT_CREATE, !MUST_BE_WRITEABLE);
     setDirectoryInSystemProps("tsd.http.cachedir", argp.get("--cachedir"),
                               CREATE_IF_NEEDED, MUST_BE_WRITEABLE);
+    setSystemProp("tsd.expression.fncalculators", argp.get("--fncalculators"));
 
     final ServerSocketChannelFactory factory;
     if (argp.get("--async-io", "true").equalsIgnoreCase("true")) {
