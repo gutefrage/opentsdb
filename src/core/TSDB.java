@@ -23,6 +23,9 @@ import com.stumbleupon.async.DeferredGroupException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.opentsdb.stats.Histogram;
+import net.opentsdb.stats.StatsCollector;
+import net.opentsdb.uid.UniqueId;
 
 import org.hbase.async.Bytes;
 import org.hbase.async.ClientStats;
@@ -33,9 +36,8 @@ import org.hbase.async.HBaseException;
 import org.hbase.async.KeyValue;
 import org.hbase.async.PutRequest;
 
-import net.opentsdb.uid.UniqueId;
-import net.opentsdb.stats.Histogram;
-import net.opentsdb.stats.StatsCollector;
+import com.stumbleupon.async.Callback;
+import com.stumbleupon.async.Deferred;
 
 /**
  * Thread-safe implementation of the TSDB client.
