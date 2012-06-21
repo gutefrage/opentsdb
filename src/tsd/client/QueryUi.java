@@ -96,8 +96,8 @@ public class QueryUi implements EntryPoint, HistoryListener {
   private static final String STATS_URL = "/stats?json";
   private static final String VERSION_URL = "/version?json";
 
-  private static final DateTimeFormat FULLDATE = DateTimeFormat
-      .getFormat("yyyy/MM/dd-HH:mm:ss");
+  private static final DateTimeFormat FULLDATE = 
+    DateTimeFormat.getFormat("yyyy/MM/dd-HH:mm:ss");
 
   private final Label current_error = new Label();
 
@@ -267,15 +267,15 @@ public class QueryUi implements EntryPoint, HistoryListener {
     smooth.addClickHandler(refreshgraph);
 
     yrange.setValidationRegexp("^("                            // Nothing or
-        + "|\\[([-+.0-9eE]+|\\*)?"      // "[start
-        + ":([-+.0-9eE]+|\\*)?\\])$");  //   :end]"
+                               + "|\\[([-+.0-9eE]+|\\*)?"      // "[start
+                               + ":([-+.0-9eE]+|\\*)?\\])$");  //   :end]"
     yrange.setVisibleLength(5);
     yrange.setMaxLength(44);  // MAX=2^26=20 chars: "[-$MAX:$MAX]"
     yrange.setText("[0:]");
 
     y2range.setValidationRegexp("^("                            // Nothing or
-        + "|\\[([-+.0-9eE]+|\\*)?"      // "[start
-        + ":([-+.0-9eE]+|\\*)?\\])$");  //   :end]"
+                                + "|\\[([-+.0-9eE]+|\\*)?"      // "[start
+                                + ":([-+.0-9eE]+|\\*)?\\])$");  //   :end]"
     y2range.setVisibleLength(5);
     y2range.setMaxLength(44);  // MAX=2^26=20 chars: "[-$MAX:$MAX]"
     y2range.setText("[0:]");
@@ -300,7 +300,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
     wxh.setVisibleLength(9);
     wxh.setMaxLength(11);  // 99999x99999
     wxh.setText((Window.getClientWidth() - 20) + "x"
-        + (Window.getClientHeight() * 4 / 5));
+                + (Window.getClientHeight() * 4 / 5));
 
     final FlexTable table = new FlexTable();
     table.setText(0, 0, "From");
@@ -319,6 +319,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
       hbox.setWidth("100%");
       table.setWidget(0, 1, hbox);
     }
+
     autoreload.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
       @Override
       public void onValueChange(final ValueChangeEvent<Boolean> event) {
@@ -509,15 +510,9 @@ public class QueryUi implements EntryPoint, HistoryListener {
         clearError();
         final int item = event.getItem();
         switch (item) {
-        case 1:
-          refreshStats();
-          return;
-        case 2:
-          refreshLogs();
-          return;
-        case 3:
-          refreshVersion();
-          return;
+          case 1: refreshStats(); return;
+          case 2: refreshLogs(); return;
+          case 3: refreshVersion(); return;
         }
       }
     });
@@ -589,8 +584,9 @@ public class QueryUi implements EntryPoint, HistoryListener {
    * Small helper to build a radio button used to change the position of the
    * key of the graph.
    */
-  private RadioButton addKeyRadioButton(final Grid grid, final int row,
-      final int col, final String pos) {
+  private RadioButton addKeyRadioButton(final Grid grid, 
+                                        final int row, final int col, 
+                                        final String pos) {
     final RadioButton rb = new RadioButton("keypos");
     rb.addClickHandler(new ClickHandler() {
       public void onClick(final ClickEvent event) {
@@ -634,12 +630,9 @@ public class QueryUi implements EntryPoint, HistoryListener {
     cf.getElement(2, 1).getStyle().setProperty("borderLeft", "1px solid #000");
     cf.getElement(2, 3).getStyle().setProperty("borderRight", "1px solid #000");
     cf.getElement(3, 1).getStyle().setProperty("borderLeft", "1px solid #000");
-    cf.getElement(3, 1).getStyle()
-        .setProperty("borderBottom", "1px solid #000");
-    cf.getElement(3, 2).getStyle()
-        .setProperty("borderBottom", "1px solid #000");
-    cf.getElement(3, 3).getStyle()
-        .setProperty("borderBottom", "1px solid #000");
+    cf.getElement(3, 1).getStyle().setProperty("borderBottom", "1px solid #000");
+    cf.getElement(3, 2).getStyle().setProperty("borderBottom", "1px solid #000");
+    cf.getElement(3, 3).getStyle().setProperty("borderBottom", "1px solid #000");
     cf.getElement(3, 3).getStyle().setProperty("borderRight", "1px solid #000");
     final VerticalPanel vbox = new VerticalPanel();
     vbox.add(new InlineLabel("Key location:"));
@@ -684,11 +677,11 @@ public class QueryUi implements EntryPoint, HistoryListener {
         final JSONString host = bd.get("host").isString();
         final JSONString repo = bd.get("repo").isString();
         build_data.setHTML("OpenTSDB built from revision "
-            + shortrev.stringValue() + " in a " + status.stringValue()
-            + " state<br/>" + "Built on "
-            + new Date((long) (stamp.doubleValue() * 1000)) + " by "
-            + user.stringValue() + '@' + host.stringValue() + ':'
-            + repo.stringValue());
+          + shortrev.stringValue() + " in a " + status.stringValue()
+          + " state<br/>" + "Built on "
+          + new Date((long) (stamp.doubleValue() * 1000)) + " by "
+          + user.stringValue() + '@' + host.stringValue() + ':'
+          + repo.stringValue());
       }
     });
   }
@@ -704,7 +697,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
           final String msg = logmsgs.get(i).isString().stringValue();
           String part = msg.substring(0, msg.indexOf('\t'));
           logs.setText(i * 2, 0,
-              new Date(Integer.valueOf(part) * 1000L).toString());
+                       new Date(Integer.valueOf(part) * 1000L).toString());
           logs.setText(i * 2 + 1, 0, "");  // So we can change the style ahead.
           int pos = part.length() + 1;
           part = msg.substring(pos, msg.indexOf('\t', pos));
@@ -996,7 +989,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
         String msg = "";
         if (err != null) {
           displayError("An error occurred while generating the graph: "
-              + err.isString().stringValue());
+                       + err.isString().stringValue());
           graphstatus.setText("Please correct the error above.");
         } else {
           clearError();
@@ -1021,7 +1014,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
 
             if (result.get("points") != null && result.get("points").isNumber() != null) {
               msg += result.get("points").isNumber() + " points retrieved, "
-                  + nplotted + " points plotted";
+                + nplotted + " points plotted";
             }
           } else {
             graph.setVisible(false);
@@ -1063,6 +1056,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
         }
         if (autoreload.getValue()) {
           final int reload_in = Integer.parseInt(autoreoload_interval.getValue());
+
           if (reload_in >= 5) {
             autoreoload_timer = new Timer() {
               public void run() {
@@ -1139,7 +1133,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
         }
 
         public void onResponseReceived(final Request request,
-            final Response response) {
+                                       final Response response) {
           final int code = response.getStatusCode();
           if (code == Response.SC_OK) {
             clearError();
@@ -1168,17 +1162,17 @@ public class QueryUi implements EntryPoint, HistoryListener {
               } else {
                 displayError(msg);
                 final DisclosurePanel dp = new DisclosurePanel(err.substring(0,
-                    newline));
+                  newline));
                 RootPanel.get("queryuimain").add(dp);  // Attach the widget.
                 final InlineLabel content = new InlineLabel(err.substring(
-                    newline, err.length()));
+                  newline, err.length()));
                 content.addStyleName("fwf");  // For readable stack traces.
                 dp.setContent(content);
                 current_error.getElement().appendChild(dp.getElement());
               }
             } else {
               displayError("Request failed while getting " + url + ": "
-                  + response.getStatusText());
+                           + response.getStatusText());
               // Since we don't call the callback we've been given, reset this
               // bit of state as we're not going to retry anything right now.
               pending_requests = 0;
@@ -1392,16 +1386,16 @@ public class QueryUi implements EntryPoint, HistoryListener {
     private final ValidatedTextBox range;
 
     public AdjustYRangeCheckOnClick(final CheckBox box,
-        final ValidatedTextBox range) {
+                                    final ValidatedTextBox range) {
       this.box = box;
       this.range = range;
     }
 
     public void onClick(final ClickEvent event) {
-      if (box.isEnabled() && box.getValue() && "[0:]".equals(range.getValue())) {
+      if (box.isEnabled() && box.getValue() 
+          && "[0:]".equals(range.getValue())) {
         range.setValue("[1:]");
-      } else if (box.isEnabled() && !box.getValue()
-          && "[1:]".equals(range.getValue())) {
+      } else if (box.isEnabled() && !box.getValue() && "[1:]".equals(range.getValue())) {
         range.setValue("[0:]");
       }
     }
