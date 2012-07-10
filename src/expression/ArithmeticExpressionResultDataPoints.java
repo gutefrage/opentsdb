@@ -15,7 +15,7 @@ public class ArithmeticExpressionResultDataPoints implements DataPoints {
   private final List<DataPoint> dataPoints = new ArrayList<DataPoint>();
 
   public ArithmeticExpressionResultDataPoints(final String metricName) {
-    this.metricName = metricName;
+    this.metricName = metricName.replaceAll("\"", "");
   }
 
   public void add(DataPoint dataPoint) {
@@ -114,7 +114,8 @@ public class ArithmeticExpressionResultDataPoints implements DataPoints {
         index = 0;
 
         while (hasNext() && next().timestamp() >= timestamp) {
-          // do nothing, just let the time pass (the goal is to update the index)
+          // do nothing, just let the time pass (the goal is to update the
+          // index)
         }
       }
     }
