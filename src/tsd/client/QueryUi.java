@@ -393,7 +393,7 @@ public class QueryUi implements EntryPoint, HistoryListener {
             }
           }
 
-          metricFormulaForm.updateAutoSuggestions(metricNames);
+          metricFormulaForm.handleMetricNamesChanged(metricNames);
         }
       };
       final EventsHandler updatey2range = new EventsHandler() {
