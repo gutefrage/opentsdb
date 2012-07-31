@@ -46,4 +46,4 @@ WHITESPACE : ( '\t' | ' ' | '\r' | '\n'| '\u000C' )+ { $channel = HIDDEN; };
  
 fragment Letter: 'A'..'Z' | 'a'..'z';
 fragment Digit: '0'..'9';
-fragment Separator: '.' | '-';
+fragment Separator: '.' | '-' | '*';
