@@ -393,28 +393,6 @@ final class MetricForm extends HorizontalPanel implements Focusable {
     }
   }
 
-  public void autoSuggestTag(final String tag) {
-    // First try to see if the tag is already in the table.
-    final int nrows = tagtable.getRowCount();
-    int unused_row = -1;
-    for (int row = 1; row < nrows; row++) {
-      final SuggestBox tagname = ((SuggestBox) tagtable.getWidget(row, 1));
-      final SuggestBox tagvalue = ((SuggestBox) tagtable.getWidget(row, 2));
-      final String thistag = tagname.getValue();
-      if (thistag.equals(tag)) {
-        return;  // This tag is already in the table.
-      } if (thistag.isEmpty() && tagvalue.getValue().isEmpty()) {
-        unused_row = row;
-        break;
-      }
-    }
-    if (unused_row >= 0) {
-      ((SuggestBox) tagtable.getWidget(unused_row, 1)).setValue(tag);
-    } else {
-      addTag(tag);
-    }
-  }
-
   private final BlurHandler recompact_tagtable = new BlurHandler() {
     public void onBlur(final BlurEvent event) {
       int ntags = getNumTags();
