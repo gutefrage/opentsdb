@@ -395,7 +395,6 @@ clean-local:
 	rm -f $(jar) tsdb $(srcdir)/pom.xml
 	rm -rf $(JAVADOC_DIR)
 
-<<<<<<< HEAD
 distclean-local:
 	rm -rf $(srcdir)/target
 
