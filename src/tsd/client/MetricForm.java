@@ -18,13 +18,9 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Focusable;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.InlineLabel;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.*;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 
 final class MetricForm extends HorizontalPanel implements Focusable {
 
@@ -32,6 +28,7 @@ final class MetricForm extends HorizontalPanel implements Focusable {
     void onMetricChange(MetricForm widget);
   }
 
+  private final EventsHandler events_handler;
   private MetricChangeHandler metric_change_handler;
 
   private final CheckBox downsample = new CheckBox("Downsample");
@@ -41,9 +38,11 @@ final class MetricForm extends HorizontalPanel implements Focusable {
   private final CheckBox x1y2 = new CheckBox("Right Axis");
   private final ListBox aggregators = new ListBox();
   private final ValidatedTextBox metric = new ValidatedTextBox();
+  private final FlexTable tagtable = new FlexTable();
   private TagsPanel tagsPanel;
 
   public MetricForm(final EventsHandler handler) {
+    events_handler = handler;
     setupDownsampleWidgets();
     tagsPanel = new TagsPanel(handler);
     downsample.addClickHandler(handler);
@@ -357,8 +356,8 @@ final class MetricForm extends HorizontalPanel implements Focusable {
     final SuggestBox suggesttagk = RemoteOracle.newSuggestBox("tagk", tagname);
     final ValidatedTextBox tagvalue = new ValidatedTextBox();
     final SuggestBox suggesttagv = RemoteOracle.newSuggestBox("tagv", tagvalue);
-    tagname.setValidationRegexp(TSDB_ID_RE);
-    tagvalue.setValidationRegexp(TSDB_TAGVALUE_RE);
+    tagname.setValidationRegexp(ClientConstants.TSDB_ID_RE);
+    tagvalue.setValidationRegexp(ClientConstants.TSDB_TAGVALUE_RE);
     tagname.setWidth("100%");
     tagvalue.setWidth("100%");
     tagname.addBlurHandler(recompact_tagtable);
