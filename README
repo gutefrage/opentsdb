@@ -19,11 +19,3 @@ easily store hundreds of billions of data points.
 OpenTSDB is free software and is available under both LGPLv2.1+ and GPLv3+.
 Find more about OpenTSDB at http://opentsdb.net
 
-== Building the antlr stuff ==
-
-1. cd into src/expression
-2. run java -classpath ../../build/third_party/antlr/antlr-3.4-complete.jar org.antlr.Tool MetricArithmeticExpression.g MetricArithmeticExpressionTreeWalker.g
-3. cd into src base directory
-4. run build.sh
-5. enjoy
-

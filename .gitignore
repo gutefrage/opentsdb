@@ -10,3 +10,7 @@ config.status
 configure
 pom.xml
 .DS_Store
+.idea/*
+.gradle/*
+*.iml
+

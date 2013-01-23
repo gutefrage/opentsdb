@@ -1,0 +1,75 @@
+/*
+ * gradle build file for OpenTSDB
+ * Sebastian Jaekel <sebastian.jaekel@gutefrage.net>
+ */
+
+apply plugin: 'java'
+
+repositories {
+  mavenCentral()
+}
+
+configurations {
+  antlr3
+}
+
+dependencies {
+  antlr3 group: "org.antlr", name: "antlr", version: "3.4"
+
+  compile(
+    // [group: "", name: "", version: ""], => template
+    [group: "com.google.guava", name: "guava", version: "12.0"],
+    [group: "io.netty", name: "netty", version: "3.5.9.Final"],
+    [group: "org.slf4j", name: "slf4j-api", version: "1.6.4"],
+    [group: "org.slf4j", name: "log4j-over-slf4j", version: "1.6.4"],
+    [group: "org.slf4j", name: "jcl-over-slf4j", version: "1.6.4"],
+    [group: "org.hbase", name: "asynchbase", version: "1.4.0"],
+    [group: "ch.qos.logback", name: "logback-core", version: "1.0.0"],
+    [group: "ch.qos.logback", name: "logback-classic", version: "1.0.0"],
+    [group: "com.google.gwt", name: "gwt-user", version: "2.4.0"],
+    [group: "org.antlr", name: "antlr", version: "3.4"]
+  )
+
+  compile("org.apache.zookeeper:zookeeper:3.3.4") {
+    exclude group: "log4j", module: "log4j"
+    exclude group: "org.slf4j", module: "slf4j-log4j12"
+    exclude group: "jline", module: "jline"
+    exclude group: "junit", module: "junit"
+  }
+
+
+  testCompile(
+    [group: "org.javassist", name: "javassist", version: "3.15.0-GA"],
+    [group: "junit", name: "junit", version: "4.10"],
+    [group: "org.mockito", name: "mockito-core", version: "1.9.0"],
+    [group: "org.powermock", name: "powermock-api-mockito", version: "1.4.10"],
+    [group: "org.powermock", name: "powermock-module-junit4", version: "1.4.10"]
+  )
+}
+
+/** this is to add antlr 3 support to gradle */
+task antlrOutputDir << {
+  mkdir(generateGrammarSource.destinationDir)
+}
+
+task generateGrammarSource(dependsOn: antlrOutputDir, type: JavaExec) {
+  description = 'Generates Java sources from Antlr3 grammars.'
+
+  destinationDir = "$buildDir/generated-sources/antlr"
+  def antlrSource = 'src/main/antlr'
+
+  inputs.dir file(antlrSource)
+  outputs.dir file(destinationDir)
+
+  def grammars = fileTree(antlrSource).include('**/*.g')
+
+  main = 'org.antlr.Tool'
+  classpath = configurations.antlr3
+  args = ["-o", "${destinationDir}/net.opentsdb.expression", grammars.files].flatten()
+}
+
+compileJava {
+  dependsOn generateGrammarSource
+  source generateGrammarSource.destinationDir
+}
+
