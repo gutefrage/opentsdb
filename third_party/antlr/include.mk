@@ -15,7 +15,7 @@
 
 ANTLR_VERSION := 3.4
 ANTLR := third_party/antlr/antlr-$(ANTLR_VERSION)-complete.jar
-ANTLR_BASE_URL := "http://www.antlr.org/download"
+ANTLR_BASE_URL := "http://www.antlr3.org/download"
 
 $(ANTLR): $(ANTLR).md5
 	set dummy "$(ANTLR_BASE_URL)" "$(ANTLR)"; shift; $(FETCH_DEPENDENCY)
